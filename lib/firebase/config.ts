@@ -1,41 +1,25 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 
-// Validate Firebase configuration (only used for error messages)
-const validateFirebaseConfig = () => {
-  const requiredVars = [
-    "NEXT_PUBLIC_FIREBASE_API_KEY",
-    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-    "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-  ];
+// Default project ID
+const DEFAULT_PROJECT_ID = "student-budi";
 
-  const missingVars = requiredVars.filter(
-    (varName) => !process.env[varName] || process.env[varName] === ""
-  );
-
-  return missingVars.length === 0;
-};
-
-// Firebase configuration
-// These should be set via environment variables
+// Firebase configuration with sensible defaults
+// Similar to how API client handles environment variables
 const getFirebaseConfig = () => {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || DEFAULT_PROJECT_ID;
+  
   const config = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "student-budi",
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || `${projectId}.firebaseapp.com`,
+    projectId: projectId,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
   };
 
-  // Validate that required fields are present and not empty
-  if (!config.apiKey || config.apiKey === "your-api-key-here") {
-    return null;
-  }
-  if (!config.authDomain || config.authDomain === "your-project-id.firebaseapp.com") {
-    return null;
-  }
-
+  // Only return null if apiKey is completely missing (required for Firebase to work)
+  // But allow initialization to proceed - Firebase will handle validation
   return config;
 };
 
@@ -58,34 +42,33 @@ const initializeFirebase = () => {
   }
 
   try {
-    // Get config first to check if it exists
+    // Get config - will have defaults if env vars not set
     const firebaseConfig = getFirebaseConfig();
     
-    if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.authDomain) {
-      // Skip validation during initialization - just try to initialize
-      // Validation will happen when auth functions are called
-      try {
-        if (getApps().length === 0) {
-          app = initializeApp(firebaseConfig);
-        } else {
-          app = getApps()[0];
-        }
-
-        // Initialize Auth
-        authInstance = getAuth(app);
-      } catch (initError) {
-        console.error("Firebase initialization error:", initError);
-        app = null;
-        authInstance = null;
+    // Try to initialize Firebase - let Firebase SDK handle validation
+    // This allows it to work even if some env vars are missing (Firebase will error on actual use)
+    try {
+      if (getApps().length === 0) {
+        app = initializeApp(firebaseConfig);
+      } else {
+        app = getApps()[0];
       }
-    } else {
-      // Config is missing or invalid
-      console.warn(
-        "Firebase configuration is missing or invalid. Please check your .env.local file and restart the dev server."
-      );
+
+      // Initialize Auth
+      authInstance = getAuth(app);
+    } catch (initError) {
+      // Only log error, don't block - Firebase will handle errors when actually used
+      console.warn("Firebase initialization warning:", initError);
+      // Still try to get existing app if available
+      const apps = getApps();
+      if (apps.length > 0) {
+        app = apps[0];
+        authInstance = getAuth(app);
+      }
     }
   } catch (error) {
-    console.error("Firebase initialization error:", error);
+    // Non-fatal error - Firebase will handle errors when actually used
+    console.warn("Firebase initialization warning:", error);
   }
 
   return { app, auth: authInstance };

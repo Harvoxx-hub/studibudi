@@ -15,12 +15,13 @@ import {
 import { getAuthInstance } from "./config";
 
 // Helper to check if Firebase Auth is configured
+// Removed strict validation - let Firebase SDK handle errors naturally
 const checkAuthConfigured = (): void => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error(
-      "Firebase Auth is not configured. Please set up your Firebase environment variables. See FIREBASE_SETUP.md for instructions."
-    );
+    // Don't throw error - let the actual Firebase operation fail naturally
+    // This allows the app to work even if Firebase isn't fully configured
+    console.warn("Firebase Auth instance not available");
   }
 };
 
@@ -38,11 +39,13 @@ export const signInWithEmail = async (
   email: string,
   password: string
 ): Promise<string> => {
-  checkAuthConfigured();
   const auth = getAuthInstance();
+  if (!auth) {
+    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+  }
   try {
     const userCredential = await signInWithEmailAndPassword(
-      auth!,
+      auth,
       email,
       password
     );
@@ -60,11 +63,13 @@ export const signUpWithEmail = async (
   email: string,
   password: string
 ): Promise<string> => {
-  checkAuthConfigured();
   const auth = getAuthInstance();
+  if (!auth) {
+    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+  }
   try {
     const userCredential = await createUserWithEmailAndPassword(
-      auth!,
+      auth,
       email,
       password
     );
@@ -79,10 +84,12 @@ export const signUpWithEmail = async (
  * Sign in with Google (popup)
  */
 export const signInWithGoogle = async (): Promise<string> => {
-  checkAuthConfigured();
   const auth = getAuthInstance();
+  if (!auth) {
+    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+  }
   try {
-    const result = await signInWithPopup(auth!, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
     const idToken = await getIdToken(result.user);
     return idToken;
   } catch (error: any) {
@@ -98,10 +105,12 @@ export const signInWithGoogle = async (): Promise<string> => {
  * Sign in with Google (redirect)
  */
 export const signInWithGoogleRedirect = async (): Promise<void> => {
-  checkAuthConfigured();
   const auth = getAuthInstance();
+  if (!auth) {
+    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+  }
   try {
-    await signInWithRedirect(auth!, googleProvider);
+    await signInWithRedirect(auth, googleProvider);
   } catch (error: any) {
     throw new Error(getAuthErrorMessage(error.code));
   }
@@ -112,10 +121,12 @@ export const signInWithGoogleRedirect = async (): Promise<void> => {
  * Send password reset email
  */
 export const resetPassword = async (email: string): Promise<void> => {
-  checkAuthConfigured();
   const auth = getAuthInstance();
+  if (!auth) {
+    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+  }
   try {
-    await sendPasswordResetEmail(auth!, email);
+    await sendPasswordResetEmail(auth, email);
   } catch (error: any) {
     throw new Error(getAuthErrorMessage(error.code));
   }
@@ -128,10 +139,12 @@ export const changeUserPassword = async (
   currentPassword: string,
   newPassword: string
 ): Promise<void> => {
-  checkAuthConfigured();
   const auth = getAuthInstance();
+  if (!auth) {
+    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+  }
   try {
-    const user = auth!.currentUser;
+    const user = auth.currentUser;
     if (!user || !user.email) {
       throw new Error("No user is currently signed in.");
     }
@@ -154,10 +167,12 @@ export const changeUserPassword = async (
  * Sign in with custom token (exchanges custom token for ID token)
  */
 export const signInWithCustomTokenAuth = async (customToken: string): Promise<string> => {
-  checkAuthConfigured();
   const auth = getAuthInstance();
+  if (!auth) {
+    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+  }
   try {
-    const userCredential = await signInWithCustomToken(auth!, customToken);
+    const userCredential = await signInWithCustomToken(auth, customToken);
     const idToken = await getIdToken(userCredential.user);
     return idToken;
   } catch (error: any) {
