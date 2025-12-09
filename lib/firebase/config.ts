@@ -7,19 +7,18 @@ const DEFAULT_PROJECT_ID = "student-budi";
 // Firebase configuration with sensible defaults
 // Similar to how API client handles environment variables
 const getFirebaseConfig = () => {
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || DEFAULT_PROJECT_ID;
+  const projectId = (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || DEFAULT_PROJECT_ID).trim();
   
+  // Trim all values to prevent whitespace/newline issues from env vars
   const config = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || `${projectId}.firebaseapp.com`,
+    apiKey: (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "").trim(),
+    authDomain: (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || `${projectId}.firebaseapp.com`).trim(),
     projectId: projectId,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
+    storageBucket: (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`).trim(),
+    messagingSenderId: (process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "").trim(),
+    appId: (process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "").trim(),
   };
 
-  // Only return null if apiKey is completely missing (required for Firebase to work)
-  // But allow initialization to proceed - Firebase will handle validation
   return config;
 };
 
