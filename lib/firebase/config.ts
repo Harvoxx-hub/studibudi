@@ -45,8 +45,13 @@ const initializeFirebase = () => {
     // Get config - will have defaults if env vars not set
     const firebaseConfig = getFirebaseConfig();
     
+    // Firebase requires apiKey to initialize - check if we have it
+    if (!firebaseConfig.apiKey || firebaseConfig.apiKey.trim() === "") {
+      console.warn("Firebase API key not found. Firebase features will not work until NEXT_PUBLIC_FIREBASE_API_KEY is set.");
+      return { app: null, auth: null };
+    }
+    
     // Try to initialize Firebase - let Firebase SDK handle validation
-    // This allows it to work even if some env vars are missing (Firebase will error on actual use)
     try {
       if (getApps().length === 0) {
         app = initializeApp(firebaseConfig);
@@ -56,9 +61,9 @@ const initializeFirebase = () => {
 
       // Initialize Auth
       authInstance = getAuth(app);
-    } catch (initError) {
-      // Only log error, don't block - Firebase will handle errors when actually used
-      console.warn("Firebase initialization warning:", initError);
+    } catch (initError: any) {
+      // Log the actual Firebase error for debugging
+      console.warn("Firebase initialization error:", initError?.message || initError);
       // Still try to get existing app if available
       const apps = getApps();
       if (apps.length > 0) {

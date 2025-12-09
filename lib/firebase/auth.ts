@@ -14,17 +14,6 @@ import {
 } from "firebase/auth";
 import { getAuthInstance } from "./config";
 
-// Helper to check if Firebase Auth is configured
-// Removed strict validation - let Firebase SDK handle errors naturally
-const checkAuthConfigured = (): void => {
-  const auth = getAuthInstance();
-  if (!auth) {
-    // Don't throw error - let the actual Firebase operation fail naturally
-    // This allows the app to work even if Firebase isn't fully configured
-    console.warn("Firebase Auth instance not available");
-  }
-};
-
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -41,7 +30,7 @@ export const signInWithEmail = async (
 ): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
   }
   try {
     const userCredential = await signInWithEmailAndPassword(
@@ -52,6 +41,9 @@ export const signInWithEmail = async (
     const idToken = await getIdToken(userCredential.user);
     return idToken;
   } catch (error: any) {
+    if (error.code === "auth/invalid-api-key" || error.code?.includes("config")) {
+      throw new Error("Firebase configuration is invalid. Please check your environment variables.");
+    }
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -65,7 +57,7 @@ export const signUpWithEmail = async (
 ): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
   }
   try {
     const userCredential = await createUserWithEmailAndPassword(
@@ -76,6 +68,9 @@ export const signUpWithEmail = async (
     const idToken = await getIdToken(userCredential.user);
     return idToken;
   } catch (error: any) {
+    if (error.code === "auth/invalid-api-key" || error.code?.includes("config")) {
+      throw new Error("Firebase configuration is invalid. Please check your environment variables.");
+    }
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -86,7 +81,7 @@ export const signUpWithEmail = async (
 export const signInWithGoogle = async (): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
   }
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -96,6 +91,10 @@ export const signInWithGoogle = async (): Promise<string> => {
     // If popup is blocked, try redirect
     if (error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user") {
       throw new Error("Popup was blocked. Please try again.");
+    }
+    // Handle Firebase config errors
+    if (error.code === "auth/invalid-api-key" || error.code?.includes("config")) {
+      throw new Error("Firebase configuration is invalid. Please check your environment variables.");
     }
     throw new Error(getAuthErrorMessage(error.code));
   }
@@ -107,11 +106,14 @@ export const signInWithGoogle = async (): Promise<string> => {
 export const signInWithGoogleRedirect = async (): Promise<void> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
   }
   try {
     await signInWithRedirect(auth, googleProvider);
   } catch (error: any) {
+    if (error.code === "auth/invalid-api-key" || error.code?.includes("config")) {
+      throw new Error("Firebase configuration is invalid. Please check your environment variables.");
+    }
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -123,11 +125,14 @@ export const signInWithGoogleRedirect = async (): Promise<void> => {
 export const resetPassword = async (email: string): Promise<void> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
   }
   try {
     await sendPasswordResetEmail(auth, email);
   } catch (error: any) {
+    if (error.code === "auth/invalid-api-key" || error.code?.includes("config")) {
+      throw new Error("Firebase configuration is invalid. Please check your environment variables.");
+    }
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -141,7 +146,7 @@ export const changeUserPassword = async (
 ): Promise<void> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
   }
   try {
     const user = auth.currentUser;
@@ -159,6 +164,9 @@ export const changeUserPassword = async (
     // Update password
     await updatePassword(user, newPassword);
   } catch (error: any) {
+    if (error.code === "auth/invalid-api-key" || error.code?.includes("config")) {
+      throw new Error("Firebase configuration is invalid. Please check your environment variables.");
+    }
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -169,13 +177,16 @@ export const changeUserPassword = async (
 export const signInWithCustomTokenAuth = async (customToken: string): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase Auth is not initialized. Please check your Firebase configuration.");
+    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
   }
   try {
     const userCredential = await signInWithCustomToken(auth, customToken);
     const idToken = await getIdToken(userCredential.user);
     return idToken;
   } catch (error: any) {
+    if (error.code === "auth/invalid-api-key" || error.code?.includes("config")) {
+      throw new Error("Firebase configuration is invalid. Please check your environment variables.");
+    }
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
