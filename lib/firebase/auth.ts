@@ -100,6 +100,9 @@ export const signInWithGoogle = async (): Promise<string> => {
     const idToken = await getIdToken(result.user);
     return idToken;
   } catch (error: any) {
+    // Log the actual error for debugging
+    console.error("Google sign-in error:", error.code, error.message, error);
+    
     // If popup is blocked, try redirect
     if (error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user") {
       throw new Error("Popup was blocked. Please try again.");
@@ -107,6 +110,10 @@ export const signInWithGoogle = async (): Promise<string> => {
     // Handle Firebase config errors
     if (error.code === "auth/invalid-api-key" || error.code?.includes("config")) {
       throw new Error("Firebase configuration is invalid. Please check your environment variables.");
+    }
+    // Handle unauthorized domain
+    if (error.code === "auth/unauthorized-domain") {
+      throw new Error("This domain is not authorized. Please add it to Firebase Console > Authentication > Settings > Authorized domains.");
     }
     throw new Error(getAuthErrorMessage(error.code));
   }
