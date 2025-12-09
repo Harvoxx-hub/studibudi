@@ -30,7 +30,11 @@ export const signInWithEmail = async (
 ): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
+    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const envHint = isProduction
+      ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
+      : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
+    throw new Error(`Firebase authentication is not available. ${envHint}`);
   }
   try {
     const userCredential = await signInWithEmailAndPassword(
@@ -57,7 +61,11 @@ export const signUpWithEmail = async (
 ): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
+    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const envHint = isProduction
+      ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
+      : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
+    throw new Error(`Firebase authentication is not available. ${envHint}`);
   }
   try {
     const userCredential = await createUserWithEmailAndPassword(
@@ -81,7 +89,11 @@ export const signUpWithEmail = async (
 export const signInWithGoogle = async (): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
+    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const envHint = isProduction
+      ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
+      : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
+    throw new Error(`Firebase authentication is not available. ${envHint}`);
   }
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -106,7 +118,11 @@ export const signInWithGoogle = async (): Promise<string> => {
 export const signInWithGoogleRedirect = async (): Promise<void> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
+    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const envHint = isProduction
+      ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
+      : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
+    throw new Error(`Firebase authentication is not available. ${envHint}`);
   }
   try {
     await signInWithRedirect(auth, googleProvider);
@@ -125,7 +141,11 @@ export const signInWithGoogleRedirect = async (): Promise<void> => {
 export const resetPassword = async (email: string): Promise<void> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
+    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const envHint = isProduction
+      ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
+      : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
+    throw new Error(`Firebase authentication is not available. ${envHint}`);
   }
   try {
     await sendPasswordResetEmail(auth, email);
@@ -146,7 +166,11 @@ export const changeUserPassword = async (
 ): Promise<void> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
+    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const envHint = isProduction
+      ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
+      : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
+    throw new Error(`Firebase authentication is not available. ${envHint}`);
   }
   try {
     const user = auth.currentUser;
@@ -177,7 +201,11 @@ export const changeUserPassword = async (
 export const signInWithCustomTokenAuth = async (customToken: string): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    throw new Error("Firebase authentication is not available. Please ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your environment variables.");
+    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const envHint = isProduction
+      ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
+      : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
+    throw new Error(`Firebase authentication is not available. ${envHint}`);
   }
   try {
     const userCredential = await signInWithCustomToken(auth, customToken);

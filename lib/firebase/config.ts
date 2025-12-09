@@ -47,7 +47,14 @@ const initializeFirebase = () => {
     
     // Firebase requires apiKey to initialize - check if we have it
     if (!firebaseConfig.apiKey || firebaseConfig.apiKey.trim() === "") {
-      console.warn("Firebase API key not found. Firebase features will not work until NEXT_PUBLIC_FIREBASE_API_KEY is set.");
+      const isProduction = process.env.NODE_ENV === "production";
+      const envHint = isProduction 
+        ? "Please add NEXT_PUBLIC_FIREBASE_API_KEY to your Vercel environment variables. See VERCEL_ENV_SETUP.md for instructions."
+        : "Please set NEXT_PUBLIC_FIREBASE_API_KEY in your .env.local file. See FIREBASE_SETUP.md for instructions.";
+      console.error(
+        "Firebase API key not found. Firebase features will not work.\n" +
+        envHint
+      );
       return { app: null, auth: null };
     }
     
