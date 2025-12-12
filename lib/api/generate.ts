@@ -230,12 +230,13 @@ export const generateApi = {
       throw new Error(response.error?.message || "Failed to get credits");
     } catch (error: any) {
       // Handle network errors gracefully
+      const errorMessage = typeof error?.message === 'string' ? error.message : '';
       const isNetworkError = 
         error?.code === "ERR_NETWORK" || 
-        error?.message === "Network Error" ||
-        error?.message?.includes("Network error") ||
-        error?.message?.includes("ECONNREFUSED") ||
-        error?.message?.includes("timeout");
+        errorMessage === "Network Error" ||
+        errorMessage.includes("Network error") ||
+        errorMessage.includes("ECONNREFUSED") ||
+        errorMessage.includes("timeout");
 
       if (isNetworkError) {
         // Create a network error with a helpful message

@@ -47,12 +47,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         }
       } catch (error: any) {
         // Silently fail network errors - they're common when backend isn't running
+        const errorMessage = typeof error?.message === 'string' ? error.message : '';
         const isNetworkError = 
           error?.isNetworkError ||
           error?.code === "ERR_NETWORK" || 
-          error?.message === "Network Error" ||
-          error?.message?.includes("Network error") ||
-          error?.message?.includes("Cannot connect to the API server");
+          errorMessage === "Network Error" ||
+          errorMessage.includes("Network error") ||
+          errorMessage.includes("Cannot connect to the API server");
         
         if (!isNetworkError) {
           console.error("Failed to load credits:", error);
