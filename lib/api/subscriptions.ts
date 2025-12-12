@@ -16,6 +16,29 @@ interface PaymentSessionResponse {
   sessionId: string;
 }
 
+interface CreditPackage {
+  id: string;
+  name: string;
+  credits: number;
+  bonus?: number;
+  price: number;
+  pricePerCredit: number;
+  currency: string;
+  recommended?: boolean;
+}
+
+interface CreditPurchaseResponse {
+  credits: number;
+  newBalance: number;
+  status?: string;
+}
+
+interface PaystackInitResponse {
+  authorizationUrl: string;
+  reference: string;
+  accessCode: string;
+}
+
 interface SubscriptionResponse {
   subscription: {
     plan: "free" | "premium";
@@ -142,6 +165,85 @@ export const subscriptionsApi = {
         throw error;
       }
       throw new Error("Failed to reactivate subscription");
+    }
+  },
+
+  // Get credit packages
+  getCreditPackages: async (): Promise<CreditPackage[]> => {
+    try {
+      const response = await api.get<ApiResponse<{ packages: CreditPackage[] }>>(
+        "/payments/credit-packages"
+      );
+
+      if (response.success && response.data) {
+        return response.data.packages;
+      }
+      throw new Error(
+        response.error?.message || "Failed to get credit packages"
+      );
+    } catch (error: any) {
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      }
+      if (error.message) {
+        throw error;
+      }
+      throw new Error("Failed to get credit packages");
+    }
+  },
+
+  // Initialize credit purchase (Paystack)
+  initializeCreditPurchase: async (
+    packageId: string,
+    callbackUrl?: string
+  ): Promise<PaystackInitResponse> => {
+    try {
+      const response = await api.post<ApiResponse<PaystackInitResponse>>(
+        "/payments/initialize-credit-purchase",
+        { packageId, callbackUrl }
+      );
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(
+        response.error?.message || "Failed to initialize payment"
+      );
+    } catch (error: any) {
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      }
+      if (error.message) {
+        throw error;
+      }
+      throw new Error("Failed to initialize payment");
+    }
+  },
+
+  // Verify credit purchase (Paystack)
+  verifyCreditPurchase: async (
+    reference: string
+  ): Promise<CreditPurchaseResponse> => {
+    try {
+      const response = await api.post<ApiResponse<CreditPurchaseResponse>>(
+        "/payments/verify-credit-purchase",
+        { reference }
+      );
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(
+        response.error?.message || "Failed to verify payment"
+      );
+    } catch (error: any) {
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      }
+      if (error.message) {
+        throw error;
+      }
+      throw new Error("Failed to verify payment");
     }
   },
 };
