@@ -229,6 +229,22 @@ export const generateApi = {
       }
       throw new Error(response.error?.message || "Failed to get credits");
     } catch (error: any) {
+      // Handle network errors gracefully
+      const isNetworkError = 
+        error?.code === "ERR_NETWORK" || 
+        error?.message === "Network Error" ||
+        error?.message?.includes("Network error") ||
+        error?.message?.includes("ECONNREFUSED") ||
+        error?.message?.includes("timeout");
+
+      if (isNetworkError) {
+        // Create a network error with a helpful message
+        const networkError = new Error("Cannot connect to the API server. Please check your connection or ensure the backend is running.");
+        (networkError as any).isNetworkError = true;
+        (networkError as any).code = "ERR_NETWORK";
+        throw networkError;
+      }
+
       if (error.response?.data?.error?.message) {
         throw new Error(error.response.data.error.message);
       }

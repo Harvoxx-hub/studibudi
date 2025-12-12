@@ -45,8 +45,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         if (user && limits.credits !== user.credits) {
           setUser({ ...user, credits: limits.credits });
         }
-      } catch (error) {
-        console.error("Failed to load credits:", error);
+      } catch (error: any) {
+        // Silently fail network errors - they're common when backend isn't running
+        const isNetworkError = 
+          error?.isNetworkError ||
+          error?.code === "ERR_NETWORK" || 
+          error?.message === "Network Error" ||
+          error?.message?.includes("Network error") ||
+          error?.message?.includes("Cannot connect to the API server");
+        
+        if (!isNetworkError) {
+          console.error("Failed to load credits:", error);
+        }
         // Fallback to user credits if available
         if (user?.credits !== undefined) {
           setCredits(user.credits);
