@@ -343,7 +343,6 @@ export default function FlashcardSetPage() {
               <Button
                 variant="primary"
                 onClick={confirmDelete}
-                className="bg-neutral-gray900 hover:bg-neutral-gray800"
               >
                 Delete
               </Button>

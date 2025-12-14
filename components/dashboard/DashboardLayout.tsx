@@ -127,8 +127,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigation = [
     { name: "Dashboard", href: "/", icon: HomeIcon },
     { name: "Study Sets", href: "/library", icon: BookOpenIcon },
-    { name: "Flashcards", href: "/flashcards", icon: AcademicCapIcon },
-    { name: "Quizzes", href: "/quizzes", icon: DocumentTextIcon },
     { name: "Notifications", href: "/notifications", icon: BellIcon, badge: unreadCount > 0 ? unreadCount : undefined },
     { name: "Profile", href: "/profile", icon: UserIcon },
     { name: "Settings", href: "/settings", icon: Cog6ToothIcon },

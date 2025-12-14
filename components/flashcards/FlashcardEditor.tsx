@@ -54,7 +54,7 @@ export function FlashcardEditor({
     <Modal isOpen={isOpen} onClose={onClose} title={mode === "create" ? "Create Flashcard" : "Edit Flashcard"}>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-neutral-gray900 mb-2">
+          <label className="block text-sm font-medium text-neutral-gray900 dark:text-neutral-gray100 mb-2">
             Front (Question/Term)
           </label>
           <input
@@ -62,7 +62,7 @@ export function FlashcardEditor({
             value={front}
             onChange={(e) => setFront(e.target.value)}
             placeholder="Enter the question or term... Use $...$ for inline math or $$...$$ for display math"
-            className="w-full px-4 py-3 border border-neutral-gray200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-black focus:border-transparent text-neutral-gray900 placeholder:text-neutral-gray400 bg-neutral-white"
+            className="w-full px-4 py-3 border border-neutral-gray200 dark:border-neutral-gray700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-black dark:focus:ring-primary-white focus:border-transparent text-neutral-gray900 dark:text-neutral-gray100 placeholder:text-neutral-gray400 dark:placeholder:text-neutral-gray500 bg-neutral-white dark:bg-neutral-gray800"
             required
           />
           {front && (
@@ -75,14 +75,14 @@ export function FlashcardEditor({
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-neutral-gray900 mb-2">
+          <label className="block text-sm font-medium text-neutral-gray900 dark:text-neutral-gray100 mb-2">
             Back (Answer/Definition)
           </label>
           <textarea
             value={back}
             onChange={(e) => setBack(e.target.value)}
             placeholder="Enter the answer or definition... Use $...$ for inline math or $$...$$ for display math"
-            className="w-full px-4 py-3 border border-neutral-gray200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-black focus:border-transparent text-neutral-gray900 placeholder:text-neutral-gray400 bg-neutral-white"
+            className="w-full px-4 py-3 border border-neutral-gray200 dark:border-neutral-gray700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-black dark:focus:ring-primary-white focus:border-transparent text-neutral-gray900 dark:text-neutral-gray100 placeholder:text-neutral-gray400 dark:placeholder:text-neutral-gray500 bg-neutral-white dark:bg-neutral-gray800"
             rows={4}
             required
           />

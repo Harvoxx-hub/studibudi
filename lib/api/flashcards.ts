@@ -41,6 +41,7 @@ interface ListParams {
   limit?: number;
   offset?: number;
   subject?: string;
+  studySetId?: string;
   sortBy?: "date" | "title" | "subject";
   sortOrder?: "asc" | "desc";
   search?: string;

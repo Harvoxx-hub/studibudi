@@ -94,18 +94,18 @@ export default function QuizDetailPage() {
         <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-neutral-gray600 hover:text-primary-black mb-4 transition-colors"
+            className="flex items-center gap-2 text-neutral-gray600 dark:text-neutral-gray400 hover:text-primary-black dark:hover:text-primary-white mb-4 transition-colors"
           >
             <ArrowLeftIcon className="w-5 h-5" />
             <span>Back</span>
           </button>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-neutral-gray900 mb-2">
+              <h1 className="text-3xl font-bold text-neutral-gray900 dark:text-neutral-gray100 mb-2">
                 {quiz.title}
               </h1>
               {quiz.description && (
-                <p className="text-neutral-gray600">{quiz.description}</p>
+                <p className="text-neutral-gray600 dark:text-neutral-gray400">{quiz.description}</p>
               )}
             </div>
             <div className="flex items-center gap-3">
@@ -120,7 +120,7 @@ export default function QuizDetailPage() {
               </Button>
               <button
                 onClick={() => setDeleteModalOpen(true)}
-                className="p-2 hover:bg-neutral-gray100 rounded-lg transition-colors text-neutral-gray600"
+                className="p-2 hover:bg-neutral-gray100 dark:hover:bg-neutral-gray800 rounded-lg transition-colors text-neutral-gray600 dark:text-neutral-gray400"
               >
                 <TrashIcon className="w-5 h-5" />
               </button>
@@ -131,40 +131,40 @@ export default function QuizDetailPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <Card className="p-4 text-center">
-            <p className="text-2xl font-bold text-neutral-gray900">
+            <p className="text-2xl font-bold text-neutral-gray900 dark:text-neutral-gray100">
               {quiz.questions?.length ?? 0}
             </p>
-            <p className="text-sm text-neutral-gray600">Questions</p>
+            <p className="text-sm text-neutral-gray600 dark:text-neutral-gray400">Questions</p>
           </Card>
           <Card className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <ChartBarIcon className="w-5 h-5 text-primary-black" />
-              <p className="text-2xl font-bold text-neutral-gray900">-</p>
+              <ChartBarIcon className="w-5 h-5 text-primary-black dark:text-primary-white" />
+              <p className="text-2xl font-bold text-neutral-gray900 dark:text-neutral-gray100">-</p>
             </div>
-            <p className="text-sm text-neutral-gray600">Best Score</p>
+            <p className="text-sm text-neutral-gray600 dark:text-neutral-gray400">Best Score</p>
           </Card>
           <Card className="p-4 text-center">
-            <p className="text-2xl font-bold text-neutral-gray900">-</p>
-            <p className="text-sm text-neutral-gray600">Attempts</p>
+            <p className="text-2xl font-bold text-neutral-gray900 dark:text-neutral-gray100">-</p>
+            <p className="text-sm text-neutral-gray600 dark:text-neutral-gray400">Attempts</p>
           </Card>
         </div>
 
         {/* Questions Preview */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-neutral-gray900 mb-4">
+          <h2 className="text-xl font-semibold text-neutral-gray900 dark:text-neutral-gray100 mb-4">
             Questions ({quiz.questions?.length ?? 0})
           </h2>
           <div className="space-y-4">
             {quiz.questions?.map((question, index) => (
               <div
                 key={question.id}
-                className="p-4 bg-neutral-gray50 rounded-lg border border-neutral-gray200"
+                className="p-4 bg-neutral-gray50 dark:bg-neutral-gray800 rounded-lg border border-neutral-gray200 dark:border-neutral-gray700"
               >
                 <div className="flex items-start gap-3 mb-3">
-                  <span className="text-sm font-medium text-primary-black bg-neutral-gray200 px-2 py-1 rounded">
+                  <span className="text-sm font-medium text-primary-black dark:text-primary-white bg-neutral-gray200 dark:bg-neutral-gray700 px-2 py-1 rounded">
                     {index + 1}
                   </span>
-                  <p className="text-base font-medium text-neutral-gray900 flex-1">
+                  <p className="text-base font-medium text-neutral-gray900 dark:text-neutral-gray100 flex-1">
                     {question.question}
                   </p>
                 </div>
@@ -174,8 +174,8 @@ export default function QuizDetailPage() {
                       key={optIndex}
                       className={`text-sm ${
                         optIndex === question.correctAnswer
-                          ? "text-primary-black font-medium"
-                          : "text-neutral-gray600"
+                          ? "text-primary-black dark:text-primary-white font-medium"
+                          : "text-neutral-gray600 dark:text-neutral-gray400"
                       }`}
                     >
                       {String.fromCharCode(65 + optIndex)}. {option}
@@ -195,7 +195,7 @@ export default function QuizDetailPage() {
           title="Delete Quiz"
         >
           <div className="space-y-4">
-            <p className="text-neutral-gray600">
+            <p className="text-neutral-gray600 dark:text-neutral-gray400">
               Are you sure you want to delete this quiz? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
@@ -208,7 +208,6 @@ export default function QuizDetailPage() {
               <Button
                 variant="primary"
                 onClick={handleDelete}
-                className="bg-neutral-gray900 hover:bg-neutral-gray800"
               >
                 Delete
               </Button>

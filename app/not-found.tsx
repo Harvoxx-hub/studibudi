@@ -55,22 +55,16 @@ export default function NotFound() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <button
-              onClick={() => router.push("/flashcards")}
-              className="text-sm text-primary-black hover:underline"
-            >
-              Flashcards
-            </button>
-            <button
-              onClick={() => router.push("/quizzes")}
-              className="text-sm text-primary-black hover:underline"
-            >
-              Quizzes
-            </button>
-            <button
               onClick={() => router.push("/library")}
               className="text-sm text-primary-black hover:underline"
             >
-              Study Library
+              Study Sets
+            </button>
+            <button
+              onClick={() => router.push("/upload")}
+              className="text-sm text-primary-black hover:underline"
+            >
+              Upload Material
             </button>
             <button
               onClick={() => router.push("/profile")}

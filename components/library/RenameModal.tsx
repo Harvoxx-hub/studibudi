@@ -10,7 +10,7 @@ interface RenameModalProps {
   onClose: () => void;
   currentName: string;
   onRename: (newName: string) => void;
-  type?: "flashcard" | "quiz";
+  type?: "flashcard" | "quiz" | "study-set";
 }
 
 export function RenameModal({
@@ -48,8 +48,15 @@ export function RenameModal({
     onClose();
   };
 
+  const getTitle = () => {
+    if (type === "flashcard") return "Flashcard Set";
+    if (type === "quiz") return "Quiz";
+    if (type === "study-set") return "Study Set";
+    return "Item";
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Rename ${type === "flashcard" ? "Flashcard Set" : "Quiz"}`}>
+    <Modal isOpen={isOpen} onClose={onClose} title={`Rename ${getTitle()}`}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Name"
