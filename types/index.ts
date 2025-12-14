@@ -82,13 +82,39 @@ export interface StudySession {
   duration?: number;
 }
 
+// Study Set Types
+export interface Topic {
+  id: string;
+  title: string; // e.g., "Cell Structure", "Photosynthesis"
+  studySetId: string;
+  materialIds: string[]; // Which materials contributed to this topic
+  content: string; // Optimized/cleaned content for this topic
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudySet {
+  id: string;
+  title: string; // e.g., "K101"
+  description?: string;
+  userId: string;
+  materials: string[]; // Array of upload IDs
+  topics: Topic[]; // Extracted topics
+  createdAt: string;
+  updatedAt: string;
+  materialCount?: number;
+  topicCount?: number;
+}
+
 // Upload Types
 export interface Upload {
   id: string;
   userId: string;
+  studySetId?: string; // NEW: Links upload to Study Set
   type: "pdf" | "text" | "image";
   fileUrl?: string;
   extractedText: string;
+  topics?: string[]; // NEW: Topic IDs extracted from this material
   createdAt: string;
   status?: "processing" | "completed" | "failed";
 }

@@ -8,5 +8,6 @@ export { generateApi } from "./generate";
 export { studySessionsApi } from "./studySessions";
 export { subscriptionsApi } from "./subscriptions";
 export { notificationsApi } from "./notifications";
+export { studySetsApi, topicsApi } from "./studySets";
 export { api } from "./client";
 
