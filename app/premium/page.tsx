@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppStore } from "@/store/useAppStore";
-import { generateApi } from "@/lib/api";
+import { generateApi, subscriptionsApi } from "@/lib/api";
 import {
   SparklesIcon,
   CreditCardIcon,
@@ -30,25 +30,25 @@ const creditPackages: CreditPackage[] = [
     id: "starter",
     name: "Starter",
     credits: 100,
-    price: 9.99,
-    pricePerCredit: 0.10,
+    price: 1000,
+    pricePerCredit: 10,
   },
   {
     id: "popular",
     name: "Popular",
     credits: 500,
-    price: 39.99,
+    price: 4000,
     bonus: 50,
     recommended: true,
-    pricePerCredit: 0.08,
+    pricePerCredit: 8,
   },
   {
     id: "pro",
     name: "Pro",
     credits: 1000,
-    price: 69.99,
+    price: 7000,
     bonus: 200,
-    pricePerCredit: 0.07,
+    pricePerCredit: 7,
   },
 ];
 
@@ -81,15 +81,41 @@ export default function PremiumPage() {
     loadCredits();
   }, [user]);
 
-  const handlePurchase = (packageId: string) => {
-    // TODO: Implement credit purchase flow
-    addNotification({
-      userId: user?.id || "temp",
-      type: "info",
-      title: "Coming Soon",
-      message: "Credit purchase will be available soon. For now, you can use your free credits.",
-      read: false,
-    });
+  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
+
+  const handlePurchase = async (packageId: string) => {
+    if (!user) {
+      addNotification({
+        userId: "temp",
+        type: "error",
+        title: "Login Required",
+        message: "Please log in to purchase credits.",
+        read: false,
+      });
+      return;
+    }
+
+    setIsPurchasing(packageId);
+    try {
+      // Initialize Paystack payment
+      const callbackUrl = `${window.location.origin}/premium/success`;
+      const result = await subscriptionsApi.initializeCreditPurchase(packageId, callbackUrl);
+      
+      // Store reference in localStorage for verification after redirect
+      localStorage.setItem('pending_credit_purchase', result.reference);
+      
+      // Redirect to Paystack checkout
+      window.location.href = result.authorizationUrl;
+    } catch (error: any) {
+      setIsPurchasing(null);
+      addNotification({
+        userId: user.id,
+        type: "error",
+        title: "Purchase Failed",
+        message: error.message || "Failed to initialize payment. Please try again.",
+        read: false,
+      });
+    }
   };
 
   return (
@@ -159,10 +185,10 @@ export default function PremiumPage() {
                   </div>
                 )}
                 <div className="text-3xl font-bold text-neutral-gray900 dark:text-neutral-gray100 mb-1">
-                  ${pkg.price}
+                  ₦{pkg.price.toLocaleString()}
                 </div>
                 <div className="text-sm text-neutral-gray600 dark:text-neutral-gray400">
-                  ${pkg.pricePerCredit.toFixed(2)} per credit
+                  ₦{pkg.pricePerCredit} per credit
                 </div>
               </div>
 
@@ -191,8 +217,9 @@ export default function PremiumPage() {
                 variant={pkg.recommended ? "primary" : "outline"}
                 className="w-full"
                 onClick={() => handlePurchase(pkg.id)}
+                disabled={isPurchasing !== null}
               >
-                Purchase Credits
+                {isPurchasing === pkg.id ? "Processing..." : "Purchase Credits"}
               </Button>
             </Card>
           ))}

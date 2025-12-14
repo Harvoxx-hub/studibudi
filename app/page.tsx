@@ -203,13 +203,13 @@ export default function Home() {
               Get Started
             </Button>
             <Button
-              variant="outline"
+              variant="white"
               size="lg"
               onClick={() => {
                 localStorage.setItem("studibudi_has_seen_welcome", "true");
                 router.push("/login");
               }}
-              className="px-8 bg-primary-white text-primary-black border-2 border-primary-white hover:bg-neutral-gray50"
+              className="px-8"
             >
               Sign In
             </Button>
