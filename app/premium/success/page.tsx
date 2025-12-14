@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppStore } from "@/store/useAppStore";
@@ -19,8 +19,14 @@ function PaymentSuccessPageContent() {
   const [creditsAdded, setCreditsAdded] = useState<number | null>(null);
   const [newBalance, setNewBalance] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const hasVerifiedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent multiple verifications
+    if (hasVerifiedRef.current) {
+      return;
+    }
+
     const verifyPayment = async () => {
       // Check for Paystack reference in URL (trxref or reference)
       const reference = searchParams.get("trxref") || searchParams.get("reference");
@@ -36,6 +42,9 @@ function PaymentSuccessPageContent() {
         
         try {
           const result = await subscriptionsApi.verifyCreditPurchase(paymentReference);
+          
+          // Mark as verified to prevent re-running
+          hasVerifiedRef.current = true;
           
           // Clear stored reference
           localStorage.removeItem("pending_credit_purchase");
@@ -58,6 +67,7 @@ function PaymentSuccessPageContent() {
           });
         } catch (err: any) {
           console.error("Error verifying credit purchase:", err);
+          hasVerifiedRef.current = true;
           setError(err.message || "Failed to verify payment");
           setIsVerifying(false);
           
@@ -75,6 +85,9 @@ function PaymentSuccessPageContent() {
         setPurchaseType("subscription");
 
         try {
+          // Mark as verified to prevent re-running
+          hasVerifiedRef.current = true;
+          
           // Fetch updated subscription status from API
           await subscriptionsApi.getSubscription();
           
@@ -96,6 +109,7 @@ function PaymentSuccessPageContent() {
           });
         } catch (err: any) {
           console.error("Error updating subscription:", err);
+          hasVerifiedRef.current = true;
           // Still show success since payment was made
           setIsVerifying(false);
         }
@@ -103,7 +117,7 @@ function PaymentSuccessPageContent() {
     };
 
     verifyPayment();
-  }, [searchParams, router, user, setUser, addNotification]);
+  }, [searchParams, router]);
 
   // Error state
   if (error) {

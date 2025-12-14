@@ -20,6 +20,18 @@ googleProvider.setCustomParameters({
   prompt: "select_account",
 });
 
+/**
+ * Check if we're running in a local development environment
+ * Accounts for both "localhost" and "127.0.0.1"
+ */
+const isLocalDevelopment = (): boolean => {
+  if (typeof window === "undefined") {
+    return false; // Server-side, not local dev
+  }
+  const hostname = window.location.hostname;
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+};
+
 
 /**
  * Sign in with email and password
@@ -30,7 +42,7 @@ export const signInWithEmail = async (
 ): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const isProduction = !isLocalDevelopment();
     const envHint = isProduction
       ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
       : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
@@ -61,7 +73,7 @@ export const signUpWithEmail = async (
 ): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const isProduction = !isLocalDevelopment();
     const envHint = isProduction
       ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
       : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
@@ -89,7 +101,7 @@ export const signUpWithEmail = async (
 export const signInWithGoogle = async (): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const isProduction = !isLocalDevelopment();
     const envHint = isProduction
       ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
       : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
@@ -125,7 +137,7 @@ export const signInWithGoogle = async (): Promise<string> => {
 export const signInWithGoogleRedirect = async (): Promise<void> => {
   const auth = getAuthInstance();
   if (!auth) {
-    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const isProduction = !isLocalDevelopment();
     const envHint = isProduction
       ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
       : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
@@ -148,7 +160,7 @@ export const signInWithGoogleRedirect = async (): Promise<void> => {
 export const resetPassword = async (email: string): Promise<void> => {
   const auth = getAuthInstance();
   if (!auth) {
-    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const isProduction = !isLocalDevelopment();
     const envHint = isProduction
       ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
       : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
@@ -173,7 +185,7 @@ export const changeUserPassword = async (
 ): Promise<void> => {
   const auth = getAuthInstance();
   if (!auth) {
-    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const isProduction = !isLocalDevelopment();
     const envHint = isProduction
       ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
       : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
@@ -208,7 +220,7 @@ export const changeUserPassword = async (
 export const signInWithCustomTokenAuth = async (customToken: string): Promise<string> => {
   const auth = getAuthInstance();
   if (!auth) {
-    const isProduction = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    const isProduction = !isLocalDevelopment();
     const envHint = isProduction
       ? "Please configure Firebase environment variables in Vercel. See VERCEL_ENV_SETUP.md for setup instructions."
       : "Please set Firebase environment variables in your .env.local file. See FIREBASE_SETUP.md for setup instructions.";
