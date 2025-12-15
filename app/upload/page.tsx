@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   LightBulbIcon,
@@ -19,8 +19,8 @@ import {
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppStore } from "@/store/useAppStore";
 import { canCreateFlashcards, canCreateQuizzes, getMaxFileSize } from "@/lib/premium";
-import { generateApi } from "@/lib/api";
-import { uploadsApi } from "@/lib/api";
+import { generateApi, uploadsApi, studySetsApi } from "@/lib/api";
+import { StudySetSelector } from "@/components/studySets";
 
 type UploadTab = "pdf" | "text" | "image";
 type GenerationMode = "flashcards" | "quiz" | null;
@@ -46,13 +46,25 @@ function UploadPageContent() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [currentUploadId, setCurrentUploadId] = useState<string | null>(null);
+  const [isExtractingText, setIsExtractingText] = useState(false);
+  const [studySetId, setStudySetId] = useState<string | null>(null);
+  const [isExtractingTopics, setIsExtractingTopics] = useState(false);
   const { addNotification } = useAppStore();
+  
+  // Refs to prevent infinite loops and track polling
+  const topicPollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isPollingTopicsRef = useRef(false);
+  const textPollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check URL params for mode
+  // Check URL params for mode and studySetId
   useEffect(() => {
     const mode = searchParams.get("mode");
     if (mode === "flashcards" || mode === "quiz") {
       setGenerationMode(mode);
+    }
+    const urlStudySetId = searchParams.get("studySetId");
+    if (urlStudySetId) {
+      setStudySetId(urlStudySetId);
     }
   }, [searchParams]);
 
@@ -71,10 +83,10 @@ function UploadPageContent() {
   };
 
   const hasContent = (): boolean => {
-    // If we have an upload ID, we can generate even without extracted text
-    // (the backend will extract it during generation if needed)
-    if (currentUploadId) {
-      return true;
+    // Only allow generation when text is actually extracted
+    // Don't show buttons if text extraction is still in progress
+    if (isExtractingText) {
+      return false;
     }
     
     const content = getCurrentContent();
@@ -107,17 +119,23 @@ function UploadPageContent() {
         maxSize: `${maxSizeMB}MB`,
       });
       
+      if (!studySetId) {
+        throw new Error("Please select a Study Set before uploading.");
+      }
+
       const upload = await uploadsApi.uploadFile(file, type, (progress) => {
         setUploadProgress(progress);
-      });
+      }, studySetId);
       setCurrentUploadId(upload.id);
       setUploadProgress(100);
       
       // If extracted text is empty, poll for it (extraction happens asynchronously)
       if (!upload.extractedText || upload.extractedText.trim().length === 0) {
+        setIsExtractingText(true);
+        
         // Poll for extracted text
         let attempts = 0;
-        const maxAttempts = 30; // 30 attempts = 30 seconds max
+        const maxAttempts = 60; // 60 attempts = 60 seconds max
         const pollInterval = 1000; // 1 second
         
         const pollForText = async () => {
@@ -136,16 +154,34 @@ function UploadPageContent() {
               if (currentUpload.extractedText && currentUpload.extractedText.trim().length > 0) {
                 // Text extraction completed
                 setPdfText(currentUpload.extractedText);
-                addNotification({
-                  userId: user?.id || "temp",
-                  type: "success",
-                  title: "File Processed",
-                  message: `Text extraction completed for ${file.name}`,
-                  read: false,
-                });
+                setIsExtractingText(false);
+                
+                // Navigate to Study Set page where topic extraction will be shown
+                if (studySetId && currentUpload.studySetId === studySetId) {
+                  addNotification({
+                    userId: user?.id || "temp",
+                    type: "success",
+                    title: "Text Extracted",
+                    message: `Text extraction completed. Navigating to Study Set to show topic extraction progress...`,
+                    read: false,
+                  });
+                  // Small delay to show notification, then navigate
+                  setTimeout(() => {
+                    navigateToStudySet(studySetId);
+                  }, 1000);
+                } else {
+                  addNotification({
+                    userId: user?.id || "temp",
+                    type: "success",
+                    title: "File Processed",
+                    message: `Text extraction completed for ${file.name}`,
+                    read: false,
+                  });
+                }
                 return;
               } else if (currentUpload.status === 'failed') {
-                // Extraction failed
+                // Extraction failed - still allow generation with upload ID
+                setIsExtractingText(false);
                 setUploadError("Text extraction failed. You can still generate with the uploaded file.");
                 setPdfText(""); // Allow generation with upload ID
                 return;
@@ -157,12 +193,14 @@ function UploadPageContent() {
             if (attempts < maxAttempts) {
               setTimeout(pollForText, pollInterval);
             } else {
-              // Timeout - allow generation anyway with upload ID
+              // Timeout - still allow generation with upload ID
+              setIsExtractingText(false);
               setUploadError("Text extraction is taking longer than expected. You can still generate with the uploaded file.");
               setPdfText(""); // Allow generation with upload ID
             }
           } catch (error) {
             console.error("Error polling for extracted text:", error);
+            setIsExtractingText(false);
             // Allow generation anyway with upload ID
             setPdfText("");
           }
@@ -181,6 +219,7 @@ function UploadPageContent() {
       } else {
         // Text already extracted
         setPdfText(upload.extractedText);
+        setIsExtractingText(false);
         addNotification({
           userId: user?.id || "temp",
           type: "success",
@@ -217,20 +256,112 @@ function UploadPageContent() {
     setUploadProgress(0);
     
     try {
+      if (!studySetId) {
+        throw new Error("Please select a Study Set before uploading.");
+      }
+
       const upload = await uploadsApi.uploadImage(file, (progress) => {
         setUploadProgress(progress);
-      });
-      setImageText(upload.extractedText || "");
+      }, studySetId);
       setCurrentUploadId(upload.id);
       setUploadProgress(100);
       
-      addNotification({
-        userId: user?.id || "temp",
-        type: "success",
-        title: "Image Uploaded",
-        message: `Successfully uploaded ${file.name}`,
-        read: false,
-      });
+      // If extracted text is empty, poll for it (extraction happens asynchronously)
+      if (!upload.extractedText || upload.extractedText.trim().length === 0) {
+        setIsExtractingText(true);
+        
+        // Poll for extracted text
+        let attempts = 0;
+        const maxAttempts = 60; // 60 attempts = 60 seconds max
+        const pollInterval = 1000; // 1 second
+        
+        const pollForText = async () => {
+          try {
+            let currentUpload;
+            try {
+              currentUpload = await uploadsApi.get(upload.id);
+            } catch {
+              const uploads = await uploadsApi.list({ limit: 100, offset: 0 });
+              currentUpload = uploads.uploads.find(u => u.id === upload.id);
+            }
+            
+            if (currentUpload) {
+              if (currentUpload.extractedText && currentUpload.extractedText.trim().length > 0) {
+                // Text extraction completed
+                setImageText(currentUpload.extractedText);
+                setIsExtractingText(false);
+                
+                // Navigate to Study Set page where topic extraction will be shown
+                if (studySetId && currentUpload.studySetId === studySetId) {
+                  addNotification({
+                    userId: user?.id || "temp",
+                    type: "success",
+                    title: "Text Extracted",
+                    message: `Text extraction completed. Navigating to Study Set to show topic extraction progress...`,
+                    read: false,
+                  });
+                  // Small delay to show notification, then navigate
+                  setTimeout(() => {
+                    navigateToStudySet(studySetId);
+                  }, 1000);
+                } else {
+                  addNotification({
+                    userId: user?.id || "temp",
+                    type: "success",
+                    title: "Image Processed",
+                    message: `Text extraction completed for ${file.name}`,
+                    read: false,
+                  });
+                }
+                return;
+              } else if (currentUpload.status === 'failed') {
+                // Extraction failed - still allow generation with upload ID
+                setIsExtractingText(false);
+                setUploadError("Text extraction failed. You can still generate with the uploaded file.");
+                setImageText("");
+                return;
+              }
+            }
+            
+            // Continue polling if not done
+            attempts++;
+            if (attempts < maxAttempts) {
+              setTimeout(pollForText, pollInterval);
+            } else {
+              // Timeout - still allow generation with upload ID
+              setIsExtractingText(false);
+              setUploadError("Text extraction is taking longer than expected. You can still generate with the uploaded file.");
+              setImageText("");
+            }
+          } catch (error) {
+            console.error("Error polling for extracted text:", error);
+            setIsExtractingText(false);
+            setImageText("");
+          }
+        };
+        
+        // Start polling after a short delay
+        setTimeout(pollForText, pollInterval);
+        
+        addNotification({
+          userId: user?.id || "temp",
+          type: "success",
+          title: "Image Uploaded",
+          message: `Successfully uploaded ${file.name}. Extracting text...`,
+          read: false,
+        });
+      } else {
+        // Text already extracted
+        setImageText(upload.extractedText);
+        setIsExtractingText(false);
+        addNotification({
+          userId: user?.id || "temp",
+          type: "success",
+          title: "Image Uploaded",
+          message: `Successfully uploaded ${file.name}`,
+          read: false,
+        });
+      }
     } catch (error: any) {
       console.error("Upload error:", error);
       setUploadError(error?.message || "Failed to upload image");
@@ -258,16 +389,35 @@ function UploadPageContent() {
     setIsUploading(true);
     
     try {
-      const upload = await uploadsApi.uploadText(textContent);
+      if (!studySetId) {
+        throw new Error("Please select a Study Set before uploading.");
+      }
+
+      const upload = await uploadsApi.uploadText(textContent, undefined, studySetId);
       setCurrentUploadId(upload.id);
       
-      addNotification({
-        userId: user?.id || "temp",
-        type: "success",
-        title: "Text Uploaded",
-        message: "Successfully uploaded text content",
-        read: false,
-      });
+      // Navigate to Study Set page where topic extraction will be shown
+      if (studySetId) {
+        addNotification({
+          userId: user?.id || "temp",
+          type: "success",
+          title: "Text Uploaded",
+          message: "Text uploaded successfully. Navigating to Study Set to show topic extraction progress...",
+          read: false,
+        });
+        // Small delay to show notification, then navigate
+        setTimeout(() => {
+          navigateToStudySet(studySetId);
+        }, 1000);
+      } else {
+        addNotification({
+          userId: user?.id || "temp",
+          type: "success",
+          title: "Text Uploaded",
+          message: "Successfully uploaded text content",
+          read: false,
+        });
+      }
     } catch (error: any) {
       console.error("Upload error:", error);
       setUploadError(error?.message || "Failed to upload text");
@@ -282,6 +432,29 @@ function UploadPageContent() {
       setIsUploading(false);
     }
   };
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (topicPollingTimeoutRef.current) {
+        clearTimeout(topicPollingTimeoutRef.current);
+        topicPollingTimeoutRef.current = null;
+      }
+      if (textPollingTimeoutRef.current) {
+        clearTimeout(textPollingTimeoutRef.current);
+        textPollingTimeoutRef.current = null;
+      }
+      isPollingTopicsRef.current = false;
+    };
+  }, []);
+
+  // Navigate to Study Set page after text extraction completes
+  const navigateToStudySet = useCallback((targetStudySetId: string) => {
+    if (targetStudySetId) {
+      // Navigate to Study Set page where topic extraction will be shown
+      router.push(`/study-sets/${targetStudySetId}`);
+    }
+  }, [router]);
 
   // Load credits on mount
   useEffect(() => {
@@ -301,6 +474,67 @@ function UploadPageContent() {
   }, [user]);
 
   const handleGenerate = async (mode: "flashcards" | "quiz") => {
+    // If text extraction is in progress, wait for it to complete
+    if (isExtractingText && currentUploadId) {
+      addNotification({
+        userId: user?.id || "temp",
+        type: "info",
+        title: "Please Wait",
+        message: "Text extraction is in progress. Please wait for it to complete before generating.",
+        read: false,
+      });
+      
+      // Wait for text extraction to complete
+      let attempts = 0;
+      const maxAttempts = 60; // 60 seconds max
+      const pollInterval = 1000; // 1 second
+      
+      const waitForText = async (): Promise<boolean> => {
+        try {
+          let currentUpload;
+          try {
+            currentUpload = await uploadsApi.get(currentUploadId);
+          } catch {
+            const uploads = await uploadsApi.list({ limit: 100, offset: 0 });
+            currentUpload = uploads.uploads.find(u => u.id === currentUploadId);
+          }
+          
+          if (currentUpload) {
+            if (currentUpload.extractedText && currentUpload.extractedText.trim().length > 0) {
+              // Text extraction completed
+              if (activeTab === "pdf") {
+                setPdfText(currentUpload.extractedText);
+              } else if (activeTab === "image") {
+                setImageText(currentUpload.extractedText);
+              }
+              setIsExtractingText(false);
+              return true;
+            } else if (currentUpload.status === 'failed') {
+              // Extraction failed - proceed anyway
+              setIsExtractingText(false);
+              return true;
+            }
+          }
+          
+          attempts++;
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+            return waitForText();
+          } else {
+            // Timeout - proceed anyway
+            setIsExtractingText(false);
+            return true;
+          }
+        } catch (error) {
+          console.error("Error waiting for text extraction:", error);
+          setIsExtractingText(false);
+          return true; // Proceed anyway
+        }
+      };
+      
+      await waitForText();
+    }
+    
     const content = getCurrentContent();
     if (!hasContent()) {
       addNotification({
@@ -405,6 +639,15 @@ function UploadPageContent() {
           </Card>
         )}
 
+        {/* Study Set Selector */}
+        <Card className="mb-6 p-6">
+          <StudySetSelector
+            selectedStudySetId={studySetId}
+            onSelect={setStudySetId}
+            required={true}
+          />
+        </Card>
+
         {/* Tab Switcher */}
         <TabSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -428,6 +671,7 @@ function UploadPageContent() {
                 setCurrentUploadId(null);
                 setUploadError(null);
                 setUploadProgress(0);
+                setIsExtractingText(false);
               }}
               file={pdfFile}
               extractedText={pdfText}
@@ -457,6 +701,7 @@ function UploadPageContent() {
                 setCurrentUploadId(null);
                 setUploadError(null);
                 setUploadProgress(0);
+                setIsExtractingText(false);
               }}
               image={imageFile}
               extractedText={imageText}
@@ -467,21 +712,26 @@ function UploadPageContent() {
         </div>
 
         {/* Generation Actions */}
-        {hasContent() && (
+        {isExtractingText && (
+          <Card className="p-6 bg-neutral-gray50 dark:bg-neutral-gray800 border-2 border-primary-black dark:border-primary-white">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-black dark:border-primary-white mx-auto mb-4"></div>
+              <h3 className="text-lg font-semibold text-neutral-gray900 dark:text-neutral-gray100 mb-2">
+                Extracting Text...
+              </h3>
+              <p className="text-sm text-neutral-gray600 dark:text-neutral-gray400">
+                Please wait while we extract text from your file. Generation options will appear once extraction is complete.
+              </p>
+            </div>
+          </Card>
+        )}
+        
+        {/* Generation Actions - Show when text is ready */}
+        {hasContent() && !isExtractingText && (
           <Card className="p-6 bg-neutral-gray50 dark:bg-neutral-gray800 border-2 border-primary-black dark:border-primary-white">
             <h3 className="text-lg font-semibold text-neutral-gray900 dark:text-neutral-gray100 mb-4">
-              {currentUploadId && !getCurrentContent().trim() 
-                ? "Ready to Generate (Text extraction in progress...)" 
-                : "Ready to Generate"}
+              Ready to Generate
             </h3>
-            {currentUploadId && !getCurrentContent().trim() && (
-              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  Your file is uploaded. Text extraction is still in progress, but you can generate now. 
-                  The AI will use the extracted text when it's ready.
-                </p>
-              </div>
-            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Button
                 variant="primary"

@@ -59,7 +59,8 @@ export const uploadsApi = {
   uploadFile: async (
     file: File,
     type: "pdf" | "document",
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    studySetId?: string
   ): Promise<Upload & { fileName?: string; fileSize?: number }> => {
     try {
       // Log file details for debugging
@@ -68,11 +69,15 @@ export const uploadsApi = {
         size: file.size,
         type: file.type,
         uploadType: type,
+        studySetId,
       });
 
       const formData = new FormData();
       formData.append("file", file, file.name); // Include filename explicitly
       formData.append("type", type);
+      if (studySetId) {
+        formData.append("studySetId", studySetId);
+      }
 
       // Log FormData contents for debugging
       console.log("FormData contents:", {
@@ -205,11 +210,15 @@ export const uploadsApi = {
   // Upload Image (OCR)
   uploadImage: async (
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    studySetId?: string
   ): Promise<Upload & { fileName?: string; fileSize?: number }> => {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (studySetId) {
+        formData.append("studySetId", studySetId);
+      }
 
       // Explicitly configure headers to ensure FormData is sent correctly
       const response = await apiClient.post<ApiResponse<UploadResponse>>(
@@ -276,12 +285,14 @@ export const uploadsApi = {
   // Upload Text
   uploadText: async (
     text: string,
-    title?: string
+    title?: string,
+    studySetId?: string
   ): Promise<Upload> => {
     try {
       const response = await api.post<ApiResponse<UploadResponse>>("/uploads/text", {
         text,
         title,
+        studySetId,
       });
 
       if (response.success && response.data) {

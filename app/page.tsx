@@ -9,19 +9,20 @@ import {
   ChartBarIcon,
   BoltIcon,
   DocumentArrowUpIcon,
+  BookOpenIcon,
+  FolderIcon,
 } from "@heroicons/react/24/outline";
 import { AcademicCapIcon as AcademicCapIconSolid } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui";
 import { QuickActionButton, RecentItemCard, ProgressCard, EmptyState } from "@/components/dashboard";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useAppStore } from "@/store/useAppStore";
-import { studySessionsApi, flashcardsApi, quizzesApi } from "@/lib/api";
+import { studySessionsApi, studySetsApi } from "@/lib/api";
 
 export default function Home() {
   const router = useRouter();
   const { user, setUser, isAuthenticated } = useAuthStore();
-  const { setRecentFlashcardSets, setRecentQuizzes, recentFlashcardSets, recentQuizzes } = useAppStore();
+  const [recentStudySets, setRecentStudySets] = useState<any[]>([]);
   const [showSplash, setShowSplash] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const [stats, setStats] = useState<{
@@ -93,41 +94,30 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user?.id]);
 
-  // Load recent items from API
+  // Load recent Study Sets from API
   useEffect(() => {
     const loadRecentItems = async () => {
       if (!isAuthenticated || !user) return;
 
       setIsLoadingRecent(true);
       try {
-        // Load recent flashcards
-        const flashcardResponse = await flashcardsApi.listSets({
-          limit: 3,
+        // Load recent Study Sets
+        const studySetsResponse = await studySetsApi.list({
+          limit: 6,
           sortBy: 'date',
           sortOrder: 'desc',
         });
-        setRecentFlashcardSets(flashcardResponse.sets);
-
-        // Load recent quizzes
-        const quizResponse = await quizzesApi.list({
-          limit: 3,
-          sortBy: 'date',
-          sortOrder: 'desc',
-        });
-        setRecentQuizzes(quizResponse.quizzes);
+        setRecentStudySets(studySetsResponse.studySets || []);
       } catch (error: any) {
-        console.error("Failed to load recent items:", error);
-        // Fallback to empty arrays on error (don't show dummy data)
-        setRecentFlashcardSets([]);
-        setRecentQuizzes([]);
+        console.error("Failed to load recent study sets:", error);
+        // Fallback to empty array on error
+        setRecentStudySets([]);
       } finally {
         setIsLoadingRecent(false);
       }
     };
 
     loadRecentItems();
-    // Only depend on isAuthenticated and user.id to prevent loops
-    // setRecentFlashcardSets and setRecentQuizzes are stable functions from Zustand
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user?.id]);
 
@@ -222,8 +212,6 @@ export default function Home() {
   // Show dashboard for authenticated users
   if (isAuthenticated && user) {
     const displayUser = user;
-    const displaySets = recentFlashcardSets;
-    const displayQuizzes = recentQuizzes;
 
     return (
       <DashboardLayout>
@@ -251,21 +239,16 @@ export default function Home() {
             <h3 className="text-xl font-semibold text-neutral-gray900 dark:text-neutral-gray100 mb-4">
               Quick Actions
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <QuickActionButton
                 icon={<DocumentArrowUpIcon className="w-8 h-8" />}
-                label="Upload Notes"
+                label="Upload Material"
                 onClick={() => router.push("/upload")}
               />
               <QuickActionButton
-                icon={<LightBulbIcon className="w-8 h-8" />}
-                label="Generate Flashcards"
-                onClick={() => router.push("/upload?mode=flashcards")}
-              />
-              <QuickActionButton
-                icon={<DocumentTextIcon className="w-8 h-8" />}
-                label="Generate Quiz"
-                onClick={() => router.push("/upload?mode=quiz")}
+                icon={<BookOpenIcon className="w-8 h-8" />}
+                label="Create Study Set"
+                onClick={() => router.push("/library")}
               />
             </div>
           </section>
@@ -279,7 +262,7 @@ export default function Home() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push("/flashcards")}
+                onClick={() => router.push("/library")}
               >
                 View All
               </Button>
@@ -290,69 +273,25 @@ export default function Home() {
                   Loading recent study sets...
                 </p>
               </div>
-            ) : displaySets.length > 0 ? (
-              <div>
-                {displaySets.map((set) => (
+            ) : recentStudySets.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recentStudySets.map((studySet) => (
                   <RecentItemCard
-                    key={set.id}
-                    title={set.title}
-                    subtitle={`${set.flashcards?.length ?? 0} cards • ${set.subject || "General"}`}
-                    badge={set.subject}
-                    onClick={() => router.push(`/flashcards/${set.id}`)}
+                    key={studySet.id}
+                    title={studySet.title}
+                    subtitle={`${studySet.materialCount ?? 0} materials • ${studySet.topicCount ?? 0} topics`}
+                    badge={studySet.description ? undefined : undefined}
+                    onClick={() => router.push(`/study-sets/${studySet.id}`)}
                   />
                 ))}
               </div>
             ) : (
               <EmptyState
-                icon={<AcademicCapIcon className="w-16 h-16 text-neutral-gray400 dark:text-neutral-gray500" />}
+                icon={<FolderIcon className="w-16 h-16 text-neutral-gray400 dark:text-neutral-gray500" />}
                 title="No Study Sets Yet"
-                description="Start creating flashcards by uploading your notes or generating them with AI."
+                description="Create your first study set by uploading materials. Topics will be automatically extracted, and you can generate flashcards and quizzes from them."
                 actionLabel="Create Study Set"
-                onAction={() => router.push("/upload")}
-              />
-            )}
-          </section>
-
-          {/* Recent Quizzes */}
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-neutral-gray900 dark:text-neutral-gray100">
-                Recent Quizzes
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/quizzes")}
-              >
-                View All
-              </Button>
-            </div>
-            {isLoadingRecent ? (
-              <div className="text-center py-8">
-                <p className="text-neutral-gray600 dark:text-neutral-gray400">
-                  Loading recent quizzes...
-                </p>
-              </div>
-            ) : displayQuizzes.length > 0 ? (
-              <div>
-                {displayQuizzes.map((quiz) => (
-                  <RecentItemCard
-                    key={quiz.id}
-                    title={quiz.title}
-                    subtitle={`${quiz.questions?.length ?? 0} questions • ${quiz.subject || "General"}`}
-                    badge={quiz.subject}
-                    badgeVariant="success"
-                    onClick={() => router.push(`/quizzes/${quiz.id}`)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={<DocumentTextIcon className="w-16 h-16 text-neutral-gray400 dark:text-neutral-gray500" />}
-                title="No Quizzes Yet"
-                description="Generate your first quiz from your study materials to test your knowledge."
-                actionLabel="Generate Quiz"
-                onAction={() => router.push("/upload?mode=quiz")}
+                onAction={() => router.push("/library")}
               />
             )}
           </section>

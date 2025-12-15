@@ -40,31 +40,31 @@ export function LoadingScreen({
         {/* Icon */}
         <div className="flex justify-center mb-6">
           <div className="relative">
-            <div className="absolute inset-0 bg-primary-black rounded-full animate-ping opacity-20" />
-            <div className="relative p-6 bg-primary-black rounded-full">
+            <div className="absolute inset-0 bg-primary-black dark:bg-primary-white rounded-full animate-ping opacity-20" />
+            <div className="relative p-6 bg-primary-black dark:bg-primary-white rounded-full">
               {mode === "flashcards" ? (
-                <LightBulbIcon className="w-12 h-12 text-primary-white" />
+                <LightBulbIcon className="w-12 h-12 text-primary-white dark:text-primary-black" />
               ) : (
-                <DocumentTextIcon className="w-12 h-12 text-primary-white" />
+                <DocumentTextIcon className="w-12 h-12 text-primary-white dark:text-primary-black" />
               )}
             </div>
           </div>
         </div>
 
         {/* Title */}
-        <h2 className="text-3xl font-bold text-neutral-gray900 mb-2">
+        <h2 className="text-3xl font-bold text-neutral-gray900 dark:text-neutral-gray100 mb-2">
           Generating {mode === "flashcards" ? "Flashcards" : "Quiz"}...
         </h2>
-        <p className="text-neutral-gray600 mb-8 text-lg">
+        <p className="text-neutral-gray600 dark:text-neutral-gray400 mb-8 text-lg">
           AI is processing your content. This may take a few moments.
         </p>
 
         {/* Progress Card */}
-        <Card className="p-6 bg-neutral-gray50 mb-6">
+        <Card className="p-6 bg-neutral-gray50 dark:bg-neutral-gray800 mb-6">
           {/* Progress Bar */}
-          <div className="w-full bg-neutral-gray200 rounded-full h-3 mb-4">
+          <div className="w-full bg-neutral-gray200 dark:bg-neutral-gray700 rounded-full h-3 mb-4">
             <div
-              className="bg-primary-black h-3 rounded-full transition-all duration-500 ease-out"
+              className="bg-primary-black dark:bg-primary-white h-3 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -72,19 +72,19 @@ export function LoadingScreen({
           {/* Progress Info */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <BoltIcon className="w-5 h-5 text-primary-black" />
-              <span className="text-sm font-medium text-neutral-gray900">
+              <BoltIcon className="w-5 h-5 text-primary-black dark:text-primary-white" />
+              <span className="text-sm font-medium text-neutral-gray900 dark:text-neutral-gray100">
                 {displayStep}
               </span>
             </div>
-            <span className="text-sm font-semibold text-primary-black">
+            <span className="text-sm font-semibold text-primary-black dark:text-primary-white">
               {progress}%
             </span>
           </div>
 
           {/* Estimated Time */}
           {estimatedTime && estimatedTime > 0 && (
-            <p className="text-xs text-neutral-gray600 text-center">
+            <p className="text-xs text-neutral-gray600 dark:text-neutral-gray400 text-center">
               Estimated time remaining: {estimatedTime} seconds
             </p>
           )}
@@ -97,8 +97,8 @@ export function LoadingScreen({
 
         {/* Tips */}
         <div className="mt-8">
-          <Card className="p-4 bg-neutral-gray50">
-            <p className="text-xs text-neutral-gray600 text-center">
+          <Card className="p-4 bg-neutral-gray50 dark:bg-neutral-gray800">
+            <p className="text-xs text-neutral-gray600 dark:text-neutral-gray400 text-center">
               💡 Tip: Longer content may take more time to process
             </p>
           </Card>

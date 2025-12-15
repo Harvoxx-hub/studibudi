@@ -30,11 +30,13 @@ function GeneratePageContent() {
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [subject, setSubject] = useState("");
   const [count, setCount] = useState(10);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
 
   const mode = (searchParams.get("mode") || "flashcards") as GenerationMode;
+  const studySetId = searchParams.get("studySetId") || undefined;
+  const topicIdsParam = searchParams.get("topicIds");
+  const topicIds = topicIdsParam ? topicIdsParam.split(",").filter(Boolean) : undefined;
   const content =
     typeof window !== "undefined"
       ? sessionStorage.getItem("generationContent") || ""
@@ -69,16 +71,22 @@ function GeneratePageContent() {
   }, [user, setUser]);
 
   useEffect(() => {
-    if (!content || content.length < 50) {
+    // If using Study Set, content will be fetched from backend - no need to check content
+    // Only check content if not using Study Set
+    if (!studySetId && (!content || content.length < 50)) {
       setError("No content found. Please go back and upload your study material.");
       setIsGenerating(false);
       return;
     }
     // Don't auto-generate, wait for user to fill form and click generate
-  }, [content, mode, user]);
+  }, [content, mode, user, studySetId]);
 
   const checkLimitsAndGenerate = async () => {
-    if (!content || content.length < 50) return;
+    // Allow generation if using Study Set (content fetched from backend) or if content exists
+    if (!studySetId && (!content || content.length < 50)) {
+      setError("No content found. Please go back and upload your study material.");
+      return;
+    }
     try {
       const limits = await generateApi.getLimits();
       
@@ -137,16 +145,17 @@ function GeneratePageContent() {
       const options = {
         count: Math.min(Math.max(count, 1), 50),
         difficulty,
-        subject: subject.trim() || undefined,
         title: title.trim() || undefined,
         description: description.trim() || undefined,
+        studySetId,
+        topicIds,
       };
 
       let job;
       if (mode === "flashcards") {
-        job = await generateApi.generateFlashcards(content, options, uploadId);
+        job = await generateApi.generateFlashcards(content || "", options, uploadId);
       } else {
-        job = await generateApi.generateQuiz(content, options, uploadId);
+        job = await generateApi.generateQuiz(content || "", options, uploadId);
       }
 
       setJobId(job.id);
@@ -300,10 +309,10 @@ function GeneratePageContent() {
         <div className="max-w-2xl mx-auto">
           <Card className="p-8">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-neutral-gray900 mb-4">
+              <h2 className="text-2xl font-bold text-neutral-gray900 dark:text-neutral-gray100 mb-4">
                 No Content Found
               </h2>
-              <p className="text-neutral-gray600 mb-6">{error}</p>
+              <p className="text-neutral-gray600 dark:text-neutral-gray400 mb-6">{error}</p>
               <Button variant="primary" onClick={handleGenerateMore}>
                 Go Back to Upload
               </Button>
@@ -320,10 +329,10 @@ function GeneratePageContent() {
         <div className="max-w-2xl mx-auto">
           <Card className="p-8">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-neutral-gray900 mb-4">
+              <h2 className="text-2xl font-bold text-neutral-gray900 dark:text-neutral-gray100 mb-4">
                 Generation Failed
               </h2>
-              <p className="text-neutral-gray600 mb-6">{error}</p>
+              <p className="text-neutral-gray600 dark:text-neutral-gray400 mb-6">{error}</p>
               <div className="flex gap-4 justify-center">
                 <Button variant="primary" onClick={handleRetry}>
                   Try Again
@@ -407,15 +416,6 @@ function GeneratePageContent() {
                 placeholder={`Enter a description for your ${mode === "flashcards" ? "flashcard set" : "quiz"}`}
               />
             </div>
-
-            {/* Subject */}
-            <Input
-              label="Subject (Optional)"
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g., Biology, Math, History"
-            />
 
             {/* Count */}
             <div className="w-full">

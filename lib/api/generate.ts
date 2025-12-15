@@ -52,6 +52,8 @@ interface GenerationOptions {
   subject?: string;
   title?: string;
   description?: string;
+  studySetId?: string; // NEW: Generate from Study Set
+  topicIds?: string[]; // NEW: Generate from specific topics
 }
 
 // Generation API Service
@@ -75,6 +77,8 @@ export const generateApi = {
             description: options?.description,
           },
           uploadId,
+          studySetId: options?.studySetId, // NEW: Study Set ID
+          topicIds: options?.topicIds, // NEW: Selected topic IDs
           async: true, // Always use async mode for job tracking
         }
       );
@@ -126,6 +130,8 @@ export const generateApi = {
             description: options?.description,
           },
           uploadId,
+          studySetId: options?.studySetId, // NEW: Study Set ID
+          topicIds: options?.topicIds, // NEW: Selected topic IDs
           async: true, // Always use async mode for job tracking
         }
       );
