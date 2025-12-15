@@ -71,7 +71,7 @@ export function MaterialList({ materials }: MaterialListProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-neutral-gray900 dark:text-neutral-gray100 mb-1 line-clamp-1">
-                  {material.fileName || `Material ${material.id.slice(0, 8)}`}
+                  {`${getTypeLabel(material.type)} Material ${material.id.slice(0, 8)}`}
                 </h3>
                 <div className="flex items-center gap-3 text-sm text-neutral-gray600 dark:text-neutral-gray400">
                   <span className="px-2 py-1 bg-neutral-gray100 dark:bg-neutral-gray800 rounded text-xs">
